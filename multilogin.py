@@ -135,46 +135,44 @@ class Multilogin():
         url = f"{MLX_BASE}/profile/create"
         name = f"profile-{random.randint(0,100000)}"
         body = {
-                "browser_type": "mimic" if self.browser_type == "chrome" else "stelthfox",
-                "os_type": "Linux",
-                "folder_id": self.FOLDER_ID,
-                "name": name,
-                "parameters": {
-                    "flags": {
-                        "audio_masking": "mask",
-                        "fonts_masking": "mask",
-                        "geolocation_masking": "mask",
-                        "geolocation_popup": "mask",
-                        "graphics_masking": "mask",
-                        "graphics_noise": "mask",
-                        "localization_masking": "mask",
-                        "media_devices_masking": "mask",
-                        "navigator_masking": "mask",
-                        "ports_masking": "mask",
-                        "proxy_masking": "mask",
-                        "screen_masking": "mask",
-                        "timezone_masking": "mask",
-                        "webrtc_masking": "mask"
-                    },
-                    "storage": {
-                        "is_local": True,
-                        "save_service_worker": False
-                    },
-                    "fingerprint": {
-                        "navigator": None,
-                        "screen": None,
-                        "media_devices": None,
-                        "audio": None,
-                        "graphic": None,
-                        "fonts": None
-                    }
-                }}
+            "browser_type": "mimic" if self.browser_type == "chrome" else "stealthfox",
+            "folder_id": self.FOLDER_ID,
+            "name": name,
+            "os_type": "linux",  # macos
+            "parameters": {
+                "fingerprint": {
+                    "navigator": None,
+                    "screen": None,
+                    "media_devices": None,
+                    "audio": None,
+                    "graphic": None,
+                    "fonts": None,
+                },
+                "flags": {
+                    "navigator_masking": "mask",
+                    "audio_masking": "mask",
+                    "localization_masking": "mask",
+                    "geolocation_popup": "prompt",
+                    "geolocation_masking": "mask",
+                    "timezone_masking": "mask",
+                    "graphics_noise": "mask",
+                    "graphics_masking": "mask",
+                    "webrtc_masking": "mask",
+                    "fonts_masking": "mask",
+                    "media_devices_masking": "mask",
+                    "screen_masking": "mask",
+                    "proxy_masking": "custom",
+                    "ports_masking": "mask",
+                },
+                "storage": {"is_local": False, "save_service_worker": True},
+            },
+            "type": "[Profile Form] Create",
+        }
         
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url,headers=self.headers, json=body) as response:
-                print(f"Response: {response}")
-                print(response.status)
-                print(await response.text())
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.post(url, json=body) as response:
+                json_response = await response.json()
+                return json_response["data"]["ids"][0]
     
 
     def get_folders(self):
@@ -196,7 +194,7 @@ async def main():
     multilogin.sign_in()
     #time.sleep(10)
 
-    await multilogin.create_profile()
+    new_profile_id = await multilogin.create_profile()
     time.sleep(10)
 
     #print(multilogin.get_folders())

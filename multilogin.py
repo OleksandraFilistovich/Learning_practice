@@ -2,6 +2,10 @@ import time
 import json
 import random
 import hashlib
+
+import ujson
+import asyncio
+import aiohttp
 import requests
 
 from multilogin_const import *
@@ -127,7 +131,7 @@ class Multilogin():
         return response.json()["status"]["message"]
     
 
-    def create_profile(self) -> str:
+    async def create_profile(self) -> str:
         url = f"{MLX_BASE}/profile/create"
         name = f"profile-{random.randint(0,100000)}"
         body = {
@@ -165,9 +169,12 @@ class Multilogin():
                         "fonts": None
                     }
                 }}
-        response = requests.get(url=url, headers=self.headers, json=body)
-        print(response)
-        #return response.json()
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url,headers=self.headers, json=body) as response:
+                print(f"Response: {response}")
+                print(response.status)
+                print(await response.text())
     
 
     def get_folders(self):
@@ -181,22 +188,27 @@ class Multilogin():
         return f' folder_id: {self.FOLDER_ID};\n browser: {self.browser_type}'
 
 
-multilogin = Multilogin(BROWSER_TYPE, FOLDER_ID)
-print(multilogin)
 
-multilogin.sign_in()
-time.sleep(10)
+async def main():
+    multilogin = Multilogin(BROWSER_TYPE, FOLDER_ID)
+    print(multilogin)
 
-#multilogin.create_profile()
-#time.sleep(10)
+    multilogin.sign_in()
+    #time.sleep(10)
 
-#print(multilogin.get_folders())
-#time.sleep(10)
+    await multilogin.create_profile()
+    time.sleep(10)
 
-#multilogin.get_browser_core()
-#time.sleep(10)
+    #print(multilogin.get_folders())
+    #time.sleep(10)
 
-multilogin.start(PROFILE_ID, False)
-time.sleep(10)
+    #multilogin.get_browser_core()
+    #time.sleep(10)
 
-multilogin.stop(PROFILE_ID)
+    multilogin.start(PROFILE_ID, False)
+    time.sleep(10)
+
+    multilogin.stop(PROFILE_ID)
+
+if __name__ == '__main__':
+    asyncio.run(main())
